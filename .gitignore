@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+*.sarif
+*.log
+.DS_Store
+sap_sentinel.egg-info/
+*.sarif
+

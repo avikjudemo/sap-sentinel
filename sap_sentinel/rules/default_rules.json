@@ -1,0 +1,81 @@
+{
+  "rules": [
+    {
+      "id": "SAP001",
+      "title": "Hardcoded SAP destination credentials",
+      "severity": "high",
+      "category": "secrets",
+      "description": "Detects hardcoded credentials in SAP destination configuration files.",
+      "confidence": "high",
+      "file_globs": [
+        "destinations/*.json",
+        "**/*.properties",
+        "*.env",
+        "**/*.env",
+        "default-env.json",
+        "vcap*.json"
+      ],
+      "patterns": [
+        "(?i)clientsecret\\s*[:=]\\s*[\"']?[^\"'\\s]+",
+        "(?i)password\\s*[:=]\\s*[\"']?[^\"'\\s]+",
+        "(?i)clientid\\s*[:=]\\s*[\"']?[^\"'\\s]+"
+      ]
+    },
+    {
+      "id": "SAP002",
+      "title": "Insecure HTTP destination to SAP system",
+      "severity": "high",
+      "category": "transport",
+      "description": "Detects SAP destinations or configs using HTTP instead of HTTPS.",
+      "confidence": "medium",
+      "file_globs": [
+        "destinations/*.json",
+        "**/*.properties",
+        "*.yaml",
+        "**/*.yaml",
+        "*.yml",
+        "**/*.yml"
+      ],
+      "patterns": [
+        "(?i)url\\s*[:=]\\s*[\"']?http://",
+        "(?i)endpoint\\s*[:=]\\s*[\"']?http://"
+      ]
+    },
+    {
+      "id": "SAP003",
+      "title": "Over-privileged XSUAA scopes or authorities",
+      "severity": "medium",
+      "category": "auth",
+      "description": "Detects potentially over-privileged OAuth scopes or authorities in XSUAA security descriptors.",
+      "confidence": "medium",
+      "file_globs": [
+        "xs-security.json",
+        "**/xs-security.json"
+      ],
+      "patterns": [
+        "(?i)authorities",
+        "(?i)authenticated-users",
+        "(?i)\\$XSAPPNAME\\.Admin"
+      ]
+    },
+    {
+      "id": "SAP004",
+      "title": "Disabled TLS or trust-all configuration",
+      "severity": "high",
+      "category": "tls",
+      "description": "Detects configuration that disables TLS verification or trusts all certificates.",
+      "confidence": "high",
+      "file_globs": [
+        "**/*.json",
+        "**/*.properties",
+        "**/*.yaml",
+        "**/*.yml"
+      ],
+      "patterns": [
+        "(?i)trustall\\s*[:=]\\s*true",
+        "(?i)skiptlsverify\\s*[:=]\\s*true",
+        "(?i)disabletls\\s*[:=]\\s*true"
+      ]
+    }
+  ]
+}
