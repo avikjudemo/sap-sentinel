@@ -19,6 +19,8 @@ The tool exits with a deterministic **0/1 status** to block merges or deployment
 
 ## Installation
 
-### From GitHub (recommended for internal teams)
+### From GitHub (recommended for internal teams) 
+# @v0.2.0 → stable
 ```bash
-pip install git+https://github.com/avikjudemo/sap-sentinel.git@v0.1.0
+pip install git+https://github.com/avikjudemo/sap-sentinel.git@v0.2.0
+
