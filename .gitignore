@@ -8,4 +8,4 @@ venv/
 .DS_Store
 sap_sentinel.egg-info/
 *.sarif
-
+negative_test.env
