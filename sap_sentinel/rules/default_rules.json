@@ -76,6 +76,135 @@
         "(?i)skiptlsverify\\s*[:=]\\s*true",
         "(?i)disabletls\\s*[:=]\\s*true"
       ]
-    }
+    },
+
+    {
+  "id": "SAP005",
+  "title": "Hardcoded OAuth/Bearer token or Basic auth header",
+  "severity": "critical",
+  "category": "secrets",
+  "description": "Detects embedded Authorization headers (Bearer/Basic) in code/config. These often grant immediate access if leaked.",
+  "confidence": "high",
+  "file_globs": [
+    "*.py", "**/*.py",
+    "*.js", "**/*.js",
+    "*.ts", "**/*.ts",
+    "*.java", "**/*.java",
+    "*.json", "**/*.json",
+    "*.yaml", "**/*.yaml",
+    "*.yml", "**/*.yml",
+    "*.properties", "**/*.properties",
+    "*.env", "**/*.env"
+  ],
+  "patterns": [
+    "(?i)authorization\\s*[:=]\\s*[\"']?bearer\\s+[a-z0-9\\-\\._~\\+\\/]+=*",
+    "(?i)authorization\\s*[:=]\\s*[\"']?basic\\s+[a-z0-9\\+\\/]+=*"
   ]
+    },
+    {
+  "id": "SAP006",
+  "title": "Hardcoded JWT / refresh token / access token value",
+  "severity": "high",
+  "category": "secrets",
+  "description": "Detects token-shaped secrets (JWT-like) or explicit access/refresh tokens stored in repo files.",
+  "confidence": "medium",
+  "file_globs": [
+    "*.py", "**/*.py",
+    "*.js", "**/*.js",
+    "*.ts", "**/*.ts",
+    "*.json", "**/*.json",
+    "*.yaml", "**/*.yaml",
+    "*.yml", "**/*.yml",
+    "*.properties", "**/*.properties",
+    "*.env", "**/*.env"
+  ],
+  "patterns": [
+    "(?i)(access_token|refresh_token|id_token)\\s*[:=]\\s*[\"']?[a-z0-9\\-\\._~\\+\\/]+=*",
+    "\\beyJ[a-zA-Z0-9_\\-]{10,}\\.[a-zA-Z0-9_\\-]{10,}\\.[a-zA-Z0-9_\\-]{10,}\\b"
+  ]
+    },
+    {
+  "id": "SAP007",
+  "title": "Private key material committed in repository",
+  "severity": "critical",
+  "category": "secrets",
+  "description": "Detects PEM private keys or key blocks in files. This is typically immediate compromise if usable.",
+  "confidence": "high",
+  "file_globs": [
+    "*.pem", "**/*.pem",
+    "*.key", "**/*.key",
+    "*.txt", "**/*.txt",
+    "*.env", "**/*.env",
+    "*.json", "**/*.json",
+    "*.yaml", "**/*.yaml",
+    "*.yml", "**/*.yml"
+  ],
+  "patterns": [
+    
+  ]
+    },
+    {
+  "id": "SAP008",
+  "title": "Keystore / certificate bundle committed (P12/JKS) or hardcoded keystore password",
+  "severity": "high",
+  "category": "secrets",
+  "description": "Detects committed keystore artifacts or hardcoded keystore passwords used for SAP integrations.",
+  "confidence": "medium",
+  "file_globs": [
+    "*.p12", "**/*.p12",
+    "*.pfx", "**/*.pfx",
+    "*.jks", "**/*.jks",
+    "*.properties", "**/*.properties",
+    "*.yaml", "**/*.yaml",
+    "*.yml", "**/*.yml",
+    "*.json", "**/*.json"
+  ],
+  "patterns": [
+    "(?i)(keystorepassword|storepass|keypass)\\s*[:=]\\s*[\"']?[^\"'\\s]+"
+  ]
+    },
+    {
+  "id": "SAP009",
+  "title": "BTP service key / VCAP services JSON committed",
+  "severity": "critical",
+  "category": "secrets",
+  "description": "Detects service key-style payloads (VCAP-like) committed to repo. These often contain client secrets and endpoints.",
+  "confidence": "high",
+  "file_globs": [
+    "default-env.json",
+    "vcap*.json",
+    "*service-key*.json",
+    "*servicekey*.json",
+    "**/*service-key*.json",
+    "**/*servicekey*.json"
+  ],
+  "patterns": [
+    "(?i)VCAP_SERVICES",
+    "(?i)\"clientsecret\"\\s*:\\s*\"[^\"]+\"",
+    "(?i)\"tokenurl\"\\s*:\\s*\"https?://[^\"]+\"",
+    "(?i)\"url\"\\s*:\\s*\"https?://[^\"]+\""
+  ]
+    },
+    {
+  "id": "SAP010",
+  "title": "CI workflow leaks secrets via echo/printenv/logging",
+  "severity": "high",
+  "category": "secrets",
+  "description": "Detects CI patterns that may leak secrets into build logs (common during incident response and debugging).",
+  "confidence": "medium",
+  "file_globs": [
+    ".github/workflows/*.yml",
+    ".github/workflows/*.yaml",
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "*.yml", "**/*.yml",
+    "*.yaml", "**/*.yaml"
+  ],
+  "patterns": [
+    "(?i)echo\\s+\\$\\{\\{\\s*secrets\\.[^\\}]+\\}\\}",
+    "(?i)printenv",
+    "(?i)env\\s*:\\s*\\n(?:.*\\n)*?\\s*(CLIENTSECRET|PASSWORD|TOKEN|API_KEY)\\s*:"
+  ]
+    }
+     ]
 }

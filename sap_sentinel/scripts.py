@@ -28,6 +28,8 @@ DEFAULT_EXCLUDE_DIRS = {
     "target",
     ".pytest_cache",
     ".mypy_cache",
+    "rules",        # excludes sap_sentinel/rules (self-scan protection)
+    "output"        # excludes output emitters if desired
 }
 
 
