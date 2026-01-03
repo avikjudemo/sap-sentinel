@@ -5,27 +5,33 @@ import sys
 from pathlib import Path
 
 from sap_sentinel.models import should_fail
-from sap_sentinel.scripts import load_rules, scan_path, utc_now_iso
+from sap_sentinel.rules.loader import load_rules
+from sap_sentinel.scripts import scan_path, utc_now_iso
 
-# If you renamed emitters -> output, use these imports:
 from sap_sentinel.output.text import emit_text
 from sap_sentinel.output.json_out import emit_json
 from sap_sentinel.output.sarif import emit_sarif
 
 
-TOOL_VERSION = "0.1.0"
+TOOL_VERSION = "0.3.0"
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="sap-sentinel",
-        description="SAP Sentinel - repo scanner for SAP/BTP security misconfigurations (v1).",
+        description="SAP Sentinel - repo scanner for SAP/BTP security misconfigurations (v0.3.0).",
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
 
     scan = sub.add_parser("scan", help="Scan a path (repo folder) for findings.")
     scan.add_argument("path", nargs="?", default=".", help="Path to scan (default: .)")
+
+    scan.add_argument(
+        "--rules-dir",
+        required=True,
+        help="Path to external rules repo directory (must contain ruleset.json + metadata.json).",
+    )
 
     scan.add_argument(
         "--format",
@@ -43,11 +49,6 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["off", "low", "medium", "high", "critical"],
         default="high",
         help="Fail (exit 1) if any finding severity is >= this level (default: high).",
-    )
-    scan.add_argument(
-        "--rules",
-        default="",
-        help="Path to rules JSON file. If omitted, uses built-in default_rules.json.",
     )
     scan.add_argument(
         "--include",
@@ -91,15 +92,10 @@ def main() -> None:
     root = str(Path(args.path).resolve())
     started_at = utc_now_iso()
 
-    # Rules file resolution
-    if args.rules:
-        rules_path = Path(args.rules)
-    else:
-        # built-in default rules path: sap_sentinel/rules/default_rules.json
-        rules_path = Path(__file__).parent / "rules" / "default_rules.json"
+    rules_dir = Path(args.rules_dir).resolve()
 
     try:
-        rules = load_rules(rules_path)
+        rules = load_rules(rules_dir)
         findings = scan_path(
             root,
             rules,
@@ -113,7 +109,6 @@ def main() -> None:
 
     finished_at = utc_now_iso()
 
-    # Render output
     fmt = args.format
     if fmt == "text":
         out_text = emit_text(findings)
@@ -134,6 +129,5 @@ def main() -> None:
 
     write_output(out_text, args.output)
 
-    # Exit code
     fail = should_fail(findings, args.fail_on)
     raise SystemExit(1 if fail else 0)

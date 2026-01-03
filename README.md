@@ -22,5 +22,5 @@ The tool exits with a deterministic **0/1 status** to block merges or deployment
 ### From GitHub (recommended for internal teams) 
 # @v0.2.0 → stable
 ```bash
-pip install git+https://github.com/avikjudemo/sap-sentinel.git@v0.2.0
+pip install git+https://github.com/avikjudemo/sap-sentinel.git@v0.3.0
 
