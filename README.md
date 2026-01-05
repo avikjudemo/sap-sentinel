@@ -1,18 +1,18 @@
 SAP Sentinel
 
 SAP Sentinel is a lightweight, Python-based security posture scanner for SAP and SAP BTP environments.
-It is designed for CI/CD pipelines and local security reviews, with a strict focus on determinism, transparency, and policy-as-code.
+It is designed for local use and CI/CD pipelines, with a strict focus on determinism, transparency, and policy-as-code.
 
 SAP Sentinel deliberately avoids SaaS backends, agents, or silent updates.
-All detection logic is versioned, reviewable, and pinned by the user.
+All detection logic is explicit, versioned, and reviewable.
 
 What SAP Sentinel Does
 
-SAP Sentinel operates in two complementary modes:
+SAP Sentinel operates in two complementary modes.
 
-1) Repository scanning (v0.1–v0.3)
+1) Repository Scanning (v0.1–v0.3)
 
-Scan source code and configuration repositories for high-risk SAP and BTP patterns:
+Scan source code and configuration repositories for high-risk SAP and SAP BTP patterns, including:
 
 Hardcoded credentials
 
@@ -22,21 +22,31 @@ Weak authentication patterns
 
 Overly permissive configuration artifacts
 
-2) BTP posture scanning via snapshots (v0.4.0)
+This mode:
 
-Collect read-only SAP BTP posture data using customer-owned credentials, produce a sanitized snapshot, and evaluate it offline using versioned rules.
+Requires no SAP system access
 
-This enables security analysis of:
+Works fully offline
 
-SAP BTP Destinations
+Is ideal for CI/CD gating
+
+2) SAP BTP Posture Scanning via Snapshots (v0.4.0)
+
+Collect read-only SAP BTP posture data using customer-owned credentials, generate a sanitized snapshot, and evaluate it offline using versioned rules.
+
+This enables detection of:
+
+SAP BTP Destination misconfigurations
 
 Cloud Connector exposure (via destination configuration)
 
-Authentication and TLS misconfigurations
+Weak authentication patterns
 
-Connectivity blast radius indicators
+TLS trust misconfigurations
 
-No live system scanning. No agents. No persistent access.
+Connectivity blast-radius indicators
+
+No agents. No persistent access. No backend.
 
 Architecture Principles
 
@@ -58,66 +68,121 @@ Inputs, rules, and outputs are all versioned artifacts
 
 Features (v0.4.0)
 
-Local or CI execution (GitHub Actions, GitLab CI, Jenkins)
+Runs locally or in CI (GitHub Actions, GitLab CI, Jenkins)
 
 Deterministic exit codes for CI gating
 
 External, versioned rulesets (policy-as-code)
 
-Human-readable, JSON, or SARIF output
+Text, JSON, or SARIF output
 
 Authenticated SAP BTP posture collection (Destinations)
 
 Sanitized snapshot output (no secrets)
 
-Cloud Connector risk detection (via destination analysis)
+Cloud Connector risk detection via destination analysis
 
 Installation
-From GitHub (recommended)
+From GitHub
 pip install git+https://github.com/avikjudemo/sap-sentinel.git@v0.4.0
 
-Rulesets (required)
+Rulesets (Required)
 
 SAP Sentinel does not bundle detection rules.
 
-You must provide an external rules repository:
+You must supply an external rules repository:
 
-Rules repo (security / GRC teams):
+Rules repository (security / GRC teams):
 https://github.com/avikjudemo/sap-sentinel-rules
 
-Rules are pinned explicitly by path or Git reference.
+Rules are explicitly pinned by path or Git reference.
 
 Usage
-1) Scan a repository (existing behavior)
-sap-sentinel scan . \
-  --rules-dir ../sap-sentinel-rules \
+Repository Scanning (v0.1–v0.3)
+Basic repository scan
+
+From the repository root you want to scan:
+
+sap-sentinel scan . `
+  --rules-dir ".\sap-sentinel-rules"
+
+Scan with explicit output format
+sap-sentinel scan . `
+  --rules-dir ".\sap-sentinel-rules" `
   --format text
 
 
-Exit code:
+Supported formats:
+
+text (default)
+
+json
+
+sarif (GitHub Code Scanning)
+
+Write scan output to a file
+sap-sentinel scan . `
+  --rules-dir ".\sap-sentinel-rules" `
+  --format json `
+  --output ".\OUTPUT\sap_sentinel_findings.json"
+
+Fail CI on severity threshold
+sap-sentinel scan . `
+  --rules-dir ".\sap-sentinel-rules" `
+  --fail-on high
+
+
+Severity levels:
+
+off
+
+low
+
+medium
+
+high
+
+critical
+
+Limit scan scope (recommended for large repos)
+
+Include only specific files:
+
+sap-sentinel scan . `
+  --rules-dir ".\sap-sentinel-rules" `
+  --include "**/*.json" `
+  --include "**/*.yaml"
+
+
+Exclude folders:
+
+sap-sentinel scan . `
+  --rules-dir ".\sap-sentinel-rules" `
+  --exclude ".git" `
+  --exclude "node_modules" `
+  --exclude "dist"
+
+Exit codes (CI-relevant)
 
 0 → no blocking findings
 
 1 → severity threshold exceeded
 
-2 → execution error
+2 → execution or configuration error
 
-2) Collect SAP BTP posture (v0.4.0)
+SAP BTP Posture Collection (v0.4.0)
 Prerequisites
 
 SAP BTP Destination service instance
 
 A service key created by the customer
 
-Read-only intent (SAP Sentinel does not modify anything)
+Read-only intent (SAP Sentinel never modifies resources)
 
-Recommended folder layout
-
-Service keys must not be committed.
-
+Recommended local layout (do not commit secrets)
 sap-sentinel-repo/
   secrets/
-    destination-service-key.json   (gitignored)
+    destination-service-key.json
 
 
 Add to .gitignore:
@@ -127,7 +192,7 @@ secrets/
 
 Collect a BTP snapshot
 
-From the repository root:
+Run from the repo root:
 
 sap-sentinel collect btp `
   --service-key ".\secrets\destination-service-key.json"
@@ -142,19 +207,19 @@ The snapshot:
 
 Contains destination configuration only
 
-Has all secrets redacted
+Redacts all secrets
 
-Is safe to store, review, or share explicitly
+Can be reviewed or shared explicitly
 
-3) Scan a BTP snapshot (example using json snapshot collected)
-sap-sentinel scan btp_output/btp_snapshot_20260105T123000Z.json \
-  --rules-dir ../sap-sentinel-rules \
+Scan a BTP snapshot
+sap-sentinel scan btp_output/btp_snapshot_20260105T123000Z.json `
+  --rules-dir ".\sap-sentinel-rules" `
   --format json
 
 
-This enables offline posture analysis without live BTP access.
+This enables offline SAP BTP posture analysis without live system access.
 
-Current BTP Coverage (v0.4.0)
+Current SAP BTP Coverage (v0.4.0)
 
 SAP BTP Destinations
 
@@ -166,7 +231,7 @@ TLS trust misconfigurations
 
 Trial vs non-trial endpoint detection
 
-Note: Deep Cloud Connector configuration and XSUAA role analysis will be added in future versions when additional APIs are collected.
+Deep Cloud Connector configuration and XSUAA role analysis will be added in future versions when additional APIs are collected.
 
 Known Limitations
 
@@ -176,7 +241,7 @@ v0.4.0 focuses on Destination service posture
 
 XSUAA bindings and role collections are not yet collected
 
-These are design choices, not gaps in intent.
+These are explicit design boundaries.
 
 Why SAP Sentinel
 
@@ -192,4 +257,4 @@ No platform lock-in
 
 License
 
-Apache 2.0
+Apache License 2.0
