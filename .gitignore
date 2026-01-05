@@ -9,3 +9,9 @@ venv/
 sap_sentinel.egg-info/
 *.sarif
 negative_test.env
+btp_output/
+sap_sentinel/btp_output/
+*.snapshot.json
+secrets/
+*.service-key.json
+

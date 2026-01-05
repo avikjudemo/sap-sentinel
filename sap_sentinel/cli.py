@@ -12,14 +12,20 @@ from sap_sentinel.output.text import emit_text
 from sap_sentinel.output.json_out import emit_json
 from sap_sentinel.output.sarif import emit_sarif
 
+# added imports for BTP destination snapshot collection-v0.4.0
+from sap_sentinel.btp.collect import collect_destinations_snapshot
+from sap_sentinel.btp_snapshot.writer import write_snapshot_json
+from sap_sentinel.btp_output.paths import default_snapshot_path
 
-TOOL_VERSION = "0.3.0"
+
+
+TOOL_VERSION = "0.4.0"
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="sap-sentinel",
-        description="SAP Sentinel - repo scanner for SAP/BTP security misconfigurations (v0.3.0).",
+        description="SAP Sentinel - repo scanner for SAP/BTP security misconfigurations (v0.4.0).",
     )
 
     sub = parser.add_subparsers(dest="command", required=True)
@@ -69,6 +75,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Skip files larger than this size in MB (default: 2).",
     )
 
+    collect = sub.add_parser("collect", help="Collect BTP posture data into a snapshot file.")
+    collect_sub = collect.add_subparsers(dest="collect_target", required=True)
+
+    btp = collect_sub.add_parser("btp", help="Collect Destinations posture via Destination service key.")
+    btp.add_argument(
+        "--service-key",
+        required=True,
+        help="Path to Destination service key JSON (used for OAuth client_credentials).",
+    )
+    btp.add_argument(
+        "--output",
+        default="",
+        help="Output snapshot path (default: btp_output/btp_snapshot_<timestamp>.json).",
+    )
+
+
     return parser
 
 
@@ -85,6 +107,22 @@ def write_output(text: str, output_path: str) -> None:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+
+    if args.command == "collect":
+        if args.collect_target != "btp":
+            parser.error("Unknown collect target")
+
+        try:
+            snapshot = collect_destinations_snapshot(args.service_key)
+            out_path = args.output or default_snapshot_path()
+            written = write_snapshot_json(snapshot, out_path)
+        except Exception as ex:
+            sys.stderr.write(f"SAP Sentinel error: {ex}\n")
+            raise SystemExit(2)
+
+        sys.stdout.write(f"Wrote snapshot: {written}\n")
+        raise SystemExit(0)
+    
 
     if args.command != "scan":
         parser.error("Unknown command")
